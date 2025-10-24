@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <!-- CSP permissive to allow inline JS/CSS on GitHub Pages -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QCM Hub · Multi-cours (LAS L1)</title>
+  <style>
+    :root{
+      --bg:#F7FAFC;--surface:#FFFFFF;--border:#E5E7EB;--text:#111827;--muted:#374151;--accent:#2563EB;--ok:#16A34A;--ko:#DC2626;--chip:#EEF2FF;--chip-text:#4338CA;--radius:14px;--wrap:1200px;--toc-w:310px;--fs:18px;--lh:1.65;--ls:0.015em;--ws:0.08em
+    }
+    body.dyslexia-active{--fs:19px;--lh:1.75;--ls:.04em;--ws:.12em}
+    *{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:"OpenDyslexic","Lexend","Atkinson Hyperlegible",Verdana,Arial,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",sans-serif;background:var(--bg);color:var(--text);font-size:var(--fs);line-height:var(--lh);letter-spacing:var(--ls);word-spacing:var(--ws)}
+
+    header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+    .wrap{max-width:var(--wrap);margin:0 auto;padding:12px 16px}
+    .title{font-weight:800;font-size:clamp(1.05rem,.9rem + 1.4vw,1.65rem);margin:0 0 6px;letter-spacing:.02em}
+    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .btn{padding:10px 12px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:12px;cursor:pointer;font-weight:700}
+    .btn:hover{filter:brightness(.98)}.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+    .badge{padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--chip-text);border:1px solid var(--border);font-weight:800}
+    .input{padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+
+    .layout{display:grid;grid-template-columns:var(--toc-w) 1fr;gap:16px}
+    aside#toc{position:sticky;top:70px;align-self:start;max-height:calc(100vh - 90px);overflow:auto}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 6px 18px rgba(17,24,39,.06)}
+    .card.pad{padding:14px}
+    .toc-title{font-weight:800;margin-bottom:8px}
+    .toc-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+    .toc-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+    .toc-item a{text-decoration:none;color:var(--text);font-weight:700}
+    .small{font-size:.95rem;color:var(--muted)}
+    .grid{display:grid;gap:14px}
+
+    /* tiles */
+    .tile{display:flex;justify-content:space-between;gap:10px;padding:14px;border:1px solid var(--border);border-radius:12px}
+    .tile:hover{background:#F3F4F6}
+    .kpi{display:flex;gap:10px;align-items:center;color:var(--muted)}
+
+    /* quiz */
+    .q-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+    .chip{background:var(--chip);color:var(--chip-text);border:1px solid var(--border);padding:4px 10px;border-radius:999px;font-size:.9rem}
+    .question{font-weight:800;margin:10px 0}
+    .options{display:grid;gap:10px}
+
+    /* custom inputs (square checkbox, round radio) */
+    .choice{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--border);border-radius:12px;padding:12px;background:#FAFAFA;cursor:pointer}
+    .choice:hover{background:#F3F4F6}
+    .choice input{appearance:none;width:20px;height:20px;margin:2px 0 0;flex:0 0 20px;border:2px solid var(--muted);position:relative;outline:none}
+    /* radios are round */
+    .choice[data-type="single"] input{border-radius:50%}
+    .choice[data-type="single"] input:checked{border-color:var(--accent)}
+    .choice[data-type="single"] input:checked::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--accent)}
+    /* checkboxes are square */
+    .choice[data-type="multi"] input{border-radius:4px}
+    .choice[data-type="multi"] input:checked{border-color:var(--accent)}
+    .choice[data-type="multi"] input:checked::after{content:"✓";position:absolute;inset:-2px;text-align:center;font-weight:900;color:var(--accent)}
+
+    .choice.correct{border-color:var(--ok);background:#ECFDF5}
+    .choice.incorrect{border-color:var(--ko);background:#FEF2F2}
+    .explain{margin-top:10px;color:var(--muted);border-left:4px solid var(--border);padding-left:10px;display:none}
+    .explain.show{display:block}
+    .status{font-weight:800}
+    .status.ok{color:var(--ok)}.status.ko{color:var(--ko)}
+
+    .footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--muted)}
+
+    /* views */
+    .view{display:none}
+    .view.active{display:block}
+
+    #diag{grid-column:1 / -1;}
+    @media(max-width:980px){:root{--wrap:760px;--toc-w:0px}.layout{grid-template-columns:1fr}aside#toc{display:none}}
+  </style>
+</head>
+<body>
+  <noscript>
+    <div class="wrap">
+      <div class="card pad" style="margin:10px 0; border-color:#DC2626; background:#FEF2F2">
+        JavaScript est désactivé. Activez-le pour utiliser le Hub (boutons, import CSV, correction...).
+      </div>
+    </div>
+  </noscript>
+  <header>
+    <div class="wrap">
+      <div class="title">QCM Hub · Multi-cours LAS L1 · <span class="badge" id="eleve-badge">Élève: anonyme</span></div>
+      <div class="row">
+        <input id="eleve-input" class="input" placeholder="Nom de l'élève (ou ?eleve=Camille dans l'URL)" />
+        <button class="btn" id="btn-eleve">Définir</button>
+        <button class="btn" id="btn-home">🏠 Accueil</button>
+        <button class="btn" id="btn-dashboard">📊 Tableau de bord</button>
+        <span class="small">Lisibilité :</span>
+        <button class="btn" id="btn-dys" aria-pressed="true">Dyslexie +</button>
+        <button class="btn" id="btn-a-plus">A+</button>
+        <button class="btn" id="btn-a-moins">A−</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap layout">
+    <!-- Diagnostics: visible only if JS fails or reports an error -->
+    <div id="diag" class="card pad" style="display:none; margin-bottom:10px"></div>
+    <!-- Left: Course list with KPIs -->
+    <aside id="toc">
+      <div class="card pad">
+        <div class="toc-title">Cours (moyennes)</div>
+        <ul id="courseList" class="toc-list"></ul>
+      </div>
+      <div class="card pad" style="margin-top:10px">
+        <div class="toc-title">Actions</div>
+        <div class="grid">
+          <button class="btn" id="btn-export-global">⤓ Export historique (.csv)</button>
+          <button class="btn" id="btn-import-csv">⬆️ Importer QCM (.csv)</button>
+          <input type="file" id="file-csv" accept=".csv" style="display:none" />
+          <div class="small">Les moyennes sont calculées à partir de l'historique stocké <b>localement</b> sur cet appareil. L'import CSV ajoute des QCM au Hub (rien n'est envoyé en ligne).</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right: Views -->
+    <section style="min-width:0">
+      <!-- Home view: list of QCM grouped by course -->
+      <div id="view-home" class="view active">
+        <div class="card pad">
+          <b>Bienvenue !</b> Sélectionnez un QCM ci-dessous. Pour ajouter des QCM, suivez la section <i>"Comment ajouter un QCM"</i> au bas de ce fichier.
+        </div>
+        <div id="home-list" class="grid" style="margin-top:10px"></div>
+        <div class="card pad" style="margin-top:10px">
+          <b>Comment ajouter un QCM</b>
+          <ol>
+            <li>Dans le tableau <code>QCMS</code> ci-dessous, ajoutez un objet avec: <code>{ id, course, title, items:[{text, choices:[...], correct, explanation}] }</code>.</li>
+            <li><b>Réponse unique</b> : <code>correct</code> est un <b>nombre</b> (index). → 
+              l'interface affiche des <b>boutons ronds</b> (radio) <i>avec validation</i>.</li>
+            <li><b>Réponses multiples</b> : <code>correct</code> est un <b>tableau d'index</b>. → 
+              l'interface affiche des <b>cases carrées</b> et un bouton <b>Valider</b>.</li>
+            <li>Le suivi et les moyennes par cours s'ajoutent automatiquement.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Quiz view -->
+      <div id="view-quiz" class="view">
+        <div class="grid" id="quiz-grid"></div>
+      </div>
+
+      <!-- Dashboard view -->
+      <div id="view-dashboard" class="view">
+        <div class="card pad">
+          <b>Tableau de bord</b> — résumé des performances (toutes sessions). Sélection actuelle: <span id="dash-eleve" class="badge">tous élèves</span>.
+        </div>
+        <div id="dash-grid" class="grid" style="margin-top:10px"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Template quiz card -->
+  <template id="tpl-q">
+    <article class="card pad" data-question>
+      <div class="q-head">
+        <div class="row" style="gap:6px">
+          <span class="chip" data-idx></span>
+          <span class="chip" data-course></span>
+          <span class="chip" data-title></span>
+          <span class="status" data-status></span>
+        </div>
+        <div class="row">
+          <span class="badge" data-score></span>
+        </div>
+      </div>
+      <div class="question" data-text></div>
+      <div class="options" role="group"></div>
+      <div class="explain" data-explain></div>
+      <div class="footer">
+        <span class="small">Correction via <b>Valider</b> (unique & multiples) • Une seule tentative</span>
+        <div class="row">
+          <button class="btn" data-validate style="display:none">Valider</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    // ===== Données: plusieurs QCM groupés par cours =====
+    // Ajoute/édite ci-dessous pour ajouter des QCM.
+    const QCMS = [
+  // === UE 1 biologie cellulaire et fondamentale ===
+  // Enseignant: AUCHET (2025-10-23)
+  { id:'ue1_auchet_culture_cellulaire_qcm1', teacher:'AUCHET-20251023', course:'Culture cellulaire', title:'QCM 20 — Culture cellulaire (base)', items:[
+      { text:'Quel est l\'objectif principal d\'une hotte à flux laminaire ?', choices:['Stériliser les instruments','Protéger l\'échantillon et l\'opérateur par un flux d\'air filtré','Incuber les cellules à 37°C','Filtrer les milieux de culture'], correct:1, explanation:'Le flux laminaire filtré (HEPA) crée une zone de travail propre, protégeant à la fois l\'échantillon et l\'opérateur selon le type de hotte.' },
+      { text:'Cochez les bonnes pratiques aseptiques :', choices:['Flammer le col des flacons ouverts','Travailler près de la bouche de la hotte','Porter gants et blouse','Conserver la hotte éteinte pendant la manipulation'], correct:[0,2], explanation:'Flamme/équipement + EPI réduisent les contaminations; la hotte doit être en marche.' }
+  ]},
+  { id:'ue1_auchet_gametogenese_fec_qcm1', teacher:'AUCHET-20251023', course:'Gametogénèse et fécondation', title:'QCM 20 — Gamétogénèse & fécondation', items:[
+      { text:'La méiose aboutit à des cellules :', choices:['Diploïdes','Haploïdes','Polyploïdes','Aneuploïdes obligatoirement'], correct:1, explanation:'La méiose réduit la ploïdie (2n → n).' }
+  ]},
+  { id:'ue1_auchet_marquage_qcm1', teacher:'AUCHET-20251023', course:'Marquage des cellules et des tissus', title:'QCM 20 — Marquages', items:[
+      { text:'En immunofluorescence indirecte, le fluorophore est porté par :', choices:['L\'antigène','L\'anticorps primaire','L\'anticorps secondaire','Le milieu de montage'], correct:2, explanation:'Le secondaire conjugué porte le fluorophore et reconnaît le primaire.' }
+  ]},
+  { id:'ue1_auchet_mito_peroxy_qcm1', teacher:'AUCHET-20251023', course:'Mitochondrie et peroxysome', title:'QCM 20 — Organites énergétiques', items:[
+      { text:'La β-oxydation des acides gras très longs (>C22) débute principalement dans :', choices:['Le cytosol','La mitochondrie','Le peroxysome','Le réticulum'], correct:2, explanation:'Les peroxysomes amorcent l\'écourtement des AG très longs.' }
+  ]},
+  { id:'ue1_auchet_noyau_qcm1', teacher:'AUCHET-20251023', course:'Organisation fonctionnelle du noyau', title:'QCM 20 — Noyau', items:[
+      { text:'Le nucléole est le siège principal de :', choices:['La réplication de l\'ADN','La transcription des ARNr et l\'assemblage des sous-unités ribosomiques','La traduction','La dégradation des ARNm'], correct:1, explanation:'Transcription des ARNr par l\'ARN Pol I et assemblage pré-ribosomal.' }
+  ]},
+
+  // Enseignant: BOURA (2025-10-23)
+  { id:'ue1_boura_comm_cell_qcm1', teacher:'BOURA-20251023', course:'Communication cellulaire', title:'QCM 20 — Signaux & récepteurs', items:[
+      { text:'Les récepteurs couplés aux protéines G (RCPG) activent en premier lieu :', choices:['Des kinases cytosoliques directement','Des protéines G hétérotrimériques','Des canaux nucléaires','La transcription sans intermédiaire'], correct:1, explanation:'Le ligand → RCPG → protéine G (αβγ) → effecteurs (AC, PLC...).' }
+  ]},
+  { id:'ue1_boura_cytosquelette_qcm1', teacher:'BOURA-20251023', course:'Cytosquelette', title:'QCM 20 — Actine, microtubules, IF', items:[
+      { text:'Cochez les rôles de l\'actine :', choices:['Anneau contractile en télophase','Transport axonal rapide','Filopodes/lamellipodes','Condensation des chromosomes'], correct:[0,2], explanation:'Anneau contractile + motilité; transport axonal rapide surtout microtubules; condensation par condensines/chromatine.' }
+  ]},
+
+  // Enseignant: CHRISTOV (2025-10-23)
+  { id:'ue1_christov_microscopie_qcm1', teacher:'CHRISTOV-20251023', course:'Microscopie', title:'QCM 20 — Microscopie', items:[
+      { text:'La résolution théorique en microscopie photonique dépend principalement de :', choices:['La température','La longueur d\'onde et l\'ouverture numérique','La tension secteur','L\'épaisseur de la lame'], correct:1, explanation:'d ≈ 0,61·λ/NA.' }
+  ]},
+
+  // Enseignant: DECOT (dossier sans sous-dossier précisé)
+  { id:'ue1_decot_generic_qcm1', teacher:'DECOT', course:'UE1 — Divers DECOT', title:'QCM 10 — Divers', items:[ ]},
+
+  // Enseignant: EL OMAR (2025-10-23)
+  { id:'ue1_elomar_mitose_meiose_qcm1', teacher:'EL OMAR-20251023', course:'Mitose et Méiose', title:'QCM 20 — Division cellulaire', items:[
+      { text:'L\'alignement des chromosomes sur la plaque équatoriale se produit en :', choices:['Prophase','Prométaphase','Métaphase','Anaphase'], correct:2, explanation:'Métaphase.' }
+  ]},
+
+  // Enseignant: SCHNEIDER (2025-10-23)
+  { id:'ue1_schneider_chromosomes_qcm1', teacher:'SCHNEIDER-20251023', course:'Chromosomes', title:'QCM 20 — Chromosomes, caryotype', items:[
+      { text:'L\'hétérochromatine constitutive est :', choices:['Toujours inactive transcriptionnellement','Toujours active','Jamais méthylée','Spécifique du nucléole'], correct:0, explanation:'En général condensée et silencieuse (centromères, télomères).' }
+  ]},
+
+  // Enseignant: VELOT (2025-10-23)
+  { id:'ue1_velot_membrane_qcm1', teacher:'VELOT-20251023', course:'Composition de la membrane plasmique', title:'QCM 20 — Membrane plasmique', items:[
+      { text:'Cochez les constituants majeurs de la membrane plasmique :', choices:['Phospholipides','Protéines','Acide nucléique','Cholestérol (chez animaux)'], correct:[0,1,3], explanation:'Bicamellaire de phospholipides + protéines; cholestérol module fluidité (animaux).'}
+  ]},
+  { id:'ue1_velot_systeme_endomembranaire_qcm1', teacher:'VELOT-20251023', course:'Système endomembranaire', title:'QCM 20 — REL, REG, Golgi, vésicules', items:[
+      { text:'La glycosylation N-liée débute principalement dans :', choices:['REL','REG','Appareil de Golgi','Cytosol'], correct:1, explanation:'Synthèse co-traductionnelle dans le REG; maturation dans Golgi.' }
+  ]},
+];
+
+    // ====== État & persistance ======
+    const LS_KEY_PREFS = 'qcmhub_prefs';
+    const LS_KEY_HISTORY = 'qcmhub_history';
+
+    const $ = (sel, root=document)=> root.querySelector(sel);
+    const $$ = (sel, root=document)=> Array.from(root.querySelectorAll(sel));
+
+    const views = { home: $('#view-home'), quiz: $('#view-quiz'), dash: $('#view-dashboard') };
+    const courseListEl = $('#courseList');
+    const homeListEl = $('#home-list');
+    const quizGrid = $('#quiz-grid');
+    const dashGrid = $('#dash-grid');
+
+    const tplQ = $('#tpl-q');
+
+    const state = {
+      current: null, // {qcm, answers:{i: {...}}, start}
+      eleve: 'anonyme'
+    };
+
+    // -------- Utilitaires --------
+    function parseQuery(){ const q=Object.fromEntries(new URLSearchParams(location.search)); return q; }
+    function loadPrefs(){ try{ return JSON.parse(localStorage.getItem(LS_KEY_PREFS)||'{}'); }catch{return{}} }
+    function savePrefs(p){ localStorage.setItem(LS_KEY_PREFS, JSON.stringify(p)); }
+    function loadHistory(){ try{ return JSON.parse(localStorage.getItem(LS_KEY_HISTORY)||'[]'); }catch{return[]} }
+    function saveHistory(h){ localStorage.setItem(LS_KEY_HISTORY, JSON.stringify(h)); }
+
+    function average(arr){ return arr.length? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+    function toPct(x){ return Math.round(x*100); }
+
+    // Score d'une question (0/1) — multi = tous justes, sinon 0
+    function scoreQuestion(item, answer){
+      if (Array.isArray(item.correct)){
+        const setC = new Set(item.correct);
+        const setA = new Set(answer || []);
+        if (setA.size !== setC.size) return 0;
+        for (const i of setC){ if (!setA.has(i)) return 0; }
+        return 1;
+      } else {
+        return (answer===item.correct)?1:0;
+      }
+    }
+
+    // ---------- Rendu Accueil ----------
+    function courses(){
+      const map = new Map();
+      for (const qcm of QCMS){ if (!map.has(qcm.course)) map.set(qcm.course, []); map.get(qcm.course).push(qcm); }
+      return map;
+    }
+
+    function computeKPIs(){
+      const hist = loadHistory();
+      const byCourse = new Map();
+      for (const s of hist){
+        const key = s.course; if (!byCourse.has(key)) byCourse.set(key, []); byCourse.get(key).push(s);
+      }
+      const res = new Map();
+      for (const [course, arr] of byCourse){
+        const pcts = arr.map(s=> s.total? s.score/s.total : 0);
+        const times = arr.map(s=> s.duration_s||0);
+        res.set(course, { avgPct: average(pcts), avgTime: average(times) });
+      }
+      return res; // Map(course -> {avgPct, avgTime})
+    }
+
+    function formatTime(s){ if(!s) return '—'; const m=Math.floor(s/60), sec=Math.round(s%60); return `${m}m${sec}s`; }
+
+    function renderCoursesSidebar(){
+      const map = courses();
+      const kpi = computeKPIs();
+      courseListEl.innerHTML='';
+      for (const [course, list] of map){
+        const k = kpi.get(course) || {avgPct:0, avgTime:0};
+        const li = document.createElement('li'); li.className='toc-item';
+        const a = document.createElement('a'); a.href='#'; a.textContent=course; a.addEventListener('click',e=>{e.preventDefault(); scrollToHomeCourse(course)});
+        const right = document.createElement('div'); right.className='kpi'; right.innerHTML = `<span class="badge">${toPct(k.avgPct)||0}%</span> <span class="small">${formatTime(k.avgTime)}</span>`;
+        li.appendChild(a); li.appendChild(right); courseListEl.appendChild(li);
+      }
+    }
+
+    function scrollToHomeCourse(course){
+      const el = document.getElementById('group-'+cssId(course)); if (el) el.scrollIntoView({behavior:'smooth'});
+    }
+
+    function cssId(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-'); }
+
+    function renderHome(){
+      views.home.classList.add('active'); views.quiz.classList.remove('active'); views.dash.classList.remove('active');
+      homeListEl.innerHTML='';
+      const map = courses();
+      for (const [course, list] of map){
+        const group = document.createElement('div'); group.className='grid'; group.id='group-'+cssId(course);
+        const head = document.createElement('div'); head.className='card pad'; head.innerHTML=`<b>${course}</b> — ${list.length} QCM`;
+        group.appendChild(head);
+        for (const qcm of list){
+          const tile = document.createElement('div'); tile.className='tile';
+          tile.innerHTML = `<div>
+              <div><b>${qcm.title}</b></div>
+              <div class="small">ID: <code>${qcm.id}</code> • Questions: ${qcm.items.length}</div>
+            </div>
+            <div class="kpi">
+              <button class="btn">Démarrer</button>
+            </div>`;
+          tile.querySelector('.btn').addEventListener('click',()=>startQCM(qcm));
+          group.appendChild(tile);
+        }
+        homeListEl.appendChild(group);
+      }
+    }
+
+    // ---------- Lancement QCM ----------
+    function startQCM(qcm){
+      state.current = { qcm, answers: {}, start: Date.now() };
+      renderQuiz();
+      views.home.classList.remove('active'); views.dash.classList.remove('active'); views.quiz.classList.add('active');
+    }
+
+    function renderQuiz(){
+      const { qcm, answers } = state.current;
+      quizGrid.innerHTML='';
+      // Barre de contrôle du QCM
+      const ctrl = document.createElement('div');
+      ctrl.className = 'card pad';
+      ctrl.innerHTML = `<b>${qcm.course}</b> · ${qcm.title} <span class="small">(Enseignant: ${qcm.teacher||'—'})</span>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="btn-export-session">⤓ Exporter cette session (.csv)</button>
+          <button class="btn" id="btn-end">📌 Terminer & enregistrer</button>
+        </div>`;
+      quizGrid.appendChild(ctrl);
+
+      qcm.items.forEach((item, i)=>{
+        const node = tplQ.content.cloneNode(true);
+        const art = node.querySelector('[data-question]'); art.id = `q-${i}`;
+        node.querySelector('[data-idx]').textContent = `Q${i+1}`;
+        node.querySelector('[data-course]').textContent = qcm.course;
+        node.querySelector('[data-title]').textContent = qcm.title;
+        node.querySelector('[data-text]').textContent = item.text;
+        node.querySelector('[data-explain]').textContent = item.explanation||'';
+        node.querySelector('[data-score]').textContent = `Score: ${Object.values(answers).filter(v=>v.correct).length}/${qcm.items.length}`;
+
+        const opts = node.querySelector('.options');
+        const isMulti = Array.isArray(item.correct);
+        const type = isMulti? 'multi':'single';
+        const validateBtn = node.querySelector('[data-validate]');
+        validateBtn.style.display = 'inline-block';
+
+        let selectedSingle = null;
+        const selected = new Set();
+
+        item.choices.forEach((label, idx)=>{
+          const row = document.createElement('label'); row.className='choice'; row.dataset.type = type;
+          const input = document.createElement('input'); input.type = isMulti? 'checkbox':'radio'; input.name = 'q_'+i; input.value=idx;
+          const text = document.createElement('div'); text.textContent = label; text.style.flex='1'; text.style.fontWeight='600';
+          row.appendChild(input); row.appendChild(text); opts.appendChild(row);
+
+          input.addEventListener('change', ()=>{
+            if (isMulti){
+              input.checked ? selected.add(idx) : selected.delete(idx);
+            } else {
+              selectedSingle = idx;
+            }
+          });
+        });
+
+        validateBtn.addEventListener('click', ()=>{
+          if (Array.isArray(item.correct)){
+            correctMulti(i, [...selected], art);
+          } else {
+            if (selectedSingle === null) { alert('Choisissez une réponse puis cliquez sur Valider.'); return; }
+            correctSingle(i, selectedSingle, art);
+          }
+        });
+
+        quizGrid.appendChild(node);
+      });
+
+      // Boutons session
+      document.getElementById('btn-end').addEventListener('click', ()=> endSession(true));
+      document.getElementById('btn-export-session').addEventListener('click', exportCurrentSessionCSV);
+    }
+
+    function markAfterCheck(art, item, given, correct){
+      // lock inputs
+      $$('.choice input', art).forEach(inp=> inp.disabled = true);
+      // decorate
+      $$('.choice', art).forEach((row, idx)=>{
+        const isRight = Array.isArray(item.correct)? item.correct.includes(idx) : (idx===item.correct);
+        if (isRight) row.classList.add('correct');
+        if (Array.isArray(given)? given.includes(idx) : given===idx){ if (!isRight) row.classList.add('incorrect'); }
+      });
+      const st = $('[data-status]', art); st.textContent = correct? '✓ Correct' : '✗ Incorrect'; st.className = 'status ' + (correct? 'ok':'ko');
+      const ex = $('[data-explain]', art); if (ex.textContent.trim()) ex.classList.add('show');
+    }
+
+    function correctSingle(i, choiceIdx, art){
+      const item = state.current.qcm.items[i];
+      const ok = (choiceIdx===item.correct);
+      state.current.answers[i] = { given: choiceIdx, correct: ok, time: new Date().toISOString() };
+      markAfterCheck(art, item, choiceIdx, ok);
+      updateQuizHeaderScores();
+    }
+
+    function correctMulti(i, givenArr, art){
+      const item = state.current.qcm.items[i];
+      const ok = scoreQuestion(item, givenArr)===1;
+      state.current.answers[i] = { given: givenArr, correct: ok, time: new Date().toISOString() };
+      markAfterCheck(art, item, givenArr, ok);
+      updateQuizHeaderScores();
+    }
+
+    function updateQuizHeaderScores(){
+      // refresh score badges in visible cards
+      $$('#view-quiz [data-score]').forEach(b=>{
+        const ok = Object.values(state.current.answers).filter(v=>v.correct).length;
+        b.textContent = `Score: ${ok}/${state.current.qcm.items.length}`;
+      });
+    }
+
+    // ----- Fin de session / Enregistrement -----
+    function endSession(save=true){
+      if (!state.current) return;
+      const { qcm, answers, start } = state.current;
+      const total = qcm.items.length;
+      const score = Object.values(answers).filter(v=>v.correct).length;
+      const duration_s = Math.round((Date.now()-start)/1000);
+      if (save){
+        const hist = loadHistory();
+        hist.push({ when:new Date().toISOString(), eleve:state.eleve, teacher:qcm.teacher||'', course:qcm.course, qcm_id:qcm.id, title:qcm.title, score, total, duration_s });
+        saveHistory(hist);
+        alert('Session enregistrée ✅');
+      }
+      state.current = null; renderCoursesSidebar(); renderHome();
+    }
+
+    // Export session courante (CSV) ou global
+    function exportCSV(rows, filename){
+      const escape=(v)=> '"'+String(v).replace(/"/g,'""')+'"';
+      const csv = rows.map(r=> r.map(escape).join(',')).join('\r\n');
+      const url = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+      const a = document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
+    }
+
+    function exportGlobal(){
+      const hist = loadHistory();
+      const rows = [[ 'date','eleve','enseignant','cours','qcm_id','titre','score','total','pct','duree_s' ]];
+      for (const s of hist){ rows.push([s.when, s.eleve||'', s.teacher||'', s.course, s.qcm_id, s.title, s.score, s.total, Math.round(100*s.score/s.total), s.duration_s||'' ]); }
+      exportCSV(rows, 'qcmhub_historique.csv');
+    }
+
+    // ---------- CSV IMPORT (QCM depuis CSV) ----------
+    // Format attendu (UTF-8, séparateur virgule, valeurs possibles entre guillemets) :
+    // teacher,course,title,question,choices,correct,explanation[,id]
+    // - choices: séparés par | (ex: "A|B|C|D")
+    // - correct: nombre pour unique (ex: 2) OU liste pour multiple (ex: "0|2|3")
+    // - id (facultatif): si absent, l'app génère un id à partir de course+title
+    function parseCSV(text){
+      const rows = [];
+      let i=0, cur='', inQ=false, row=[];
+      while(i<text.length){
+        const ch = text[i];
+        if (inQ){
+          if (ch==='"'){
+            if (text[i+1]==='"'){ cur+='"'; i++; }
+            else { inQ=false; }
+          } else { cur+=ch; }
+        } else {
+          if (ch==='"') inQ=true;
+          else if (ch===','){ row.push(cur); cur=''; }
+          else if (ch==='\n' || ch==='\r'){
+            if (cur!=='' || row.length){ row.push(cur); rows.push(row); row=[]; cur=''; }
+            if (ch==='\r' && text[i+1]==='\n') i++;
+          }
+          else { cur+=ch; }
+        }
+        i++;
+      }
+      if (cur!=='' || row.length){ row.push(cur); rows.push(row); }
+      return rows.filter(r=> r.some(c=> String(c).trim()!==''));
+    }
+
+    function slug(s){ return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
+
+    function csvRowsToQCMs(rows){
+      if (!rows.length) return [];
+      const header = rows[0].map(h=> h.trim().toLowerCase());
+      const idx = (name)=> header.indexOf(name);
+      const iTeacher = idx('teacher'), iCourse = idx('course'), iTitle = idx('title'), iQ = idx('question'), iChoices = idx('choices'), iCorrect = idx('correct'), iExplain = idx('explanation'), iId = idx('id');
+      if ([iTeacher,iCourse,iTitle,iQ,iChoices,iCorrect].some(v=> v===-1)) throw new Error('Colonnes manquantes. Requises: teacher,course,title,question,choices,correct');
+      const groups = new Map(); // key = teacher|course|title
+      for (let r=1;r<rows.length;r++){
+        const row = rows[r];
+        const teacher = row[iTeacher]||'';
+        const course = row[iCourse]||'';
+        const title = row[iTitle]||'';
+        const question = row[iQ]||'';
+        const choicesRaw = row[iChoices]||'';
+        const correctRaw = row[iCorrect]||'';
+        const explanation = row[iExplain]||'';
+        const explicitId = iId>=0? (row[iId]||''): '';
+        if (!course || !title || !question) continue;
+        const key = [teacher,course,title].join('|');
+        if (!groups.has(key)){
+          const baseId = explicitId || `auto_${slug(course)}_${slug(title)}`;
+          groups.set(key, { id: baseId, teacher, course, title, items: [] });
+        }
+        const choices = String(choicesRaw).split('|');
+        let correct;
+        if (String(correctRaw).includes('|')) correct = String(correctRaw).split('|').map(s=> Number(s.trim())).filter(n=> !Number.isNaN(n));
+        else correct = Number(String(correctRaw).trim());
+        groups.get(key).items.push({ text: question, choices, correct, explanation });
+      }
+      return [...groups.values()];
+    }
+
+    function handleCSVFile(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const rows = parseCSV(reader.result || '');
+          const qcms = csvRowsToQCMs(rows);
+          if (!qcms.length) { alert('CSV vide ou invalide.'); return; }
+          const added = [];
+          for (const qcm of qcms){ QCMS.push(qcm); added.push(`${qcm.course} · ${qcm.title} (${qcm.items.length} questions)`); }
+          renderCoursesSidebar(); renderHome();
+          alert(`Import réussi :\n- ${added.join('\n- ')}`);
+        } catch(e){ console.error(e); alert('Erreur import CSV : '+ e.message); }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    // ---------- Dashboard ----------
+    function renderDashboard(){
+      views.home.classList.remove('active'); views.quiz.classList.remove('active'); views.dash.classList.add('active');
+      const hist = loadHistory();
+      const byCourse = new Map();
+      for (const s of hist){ const key=s.course; if (!byCourse.has(key)) byCourse.set(key, []); byCourse.get(key).push(s); }
+      dashGrid.innerHTML='';
+      for (const [course, arr] of byCourse){
+        const avgPct = average(arr.map(s=> s.score/s.total));
+        const avgTime = average(arr.map(s=> s.duration_s));
+        const n = arr.length;
+        const best = Math.max(...arr.map(s=> Math.round(100*s.score/s.total)));
+        const div = document.createElement('div'); div.className='card pad';
+        div.innerHTML = `<b>${course}</b><br>
+          <div class="row" style="margin-top:6px">
+            <span class="badge">Moyenne: ${toPct(avgPct)}%</span>
+            <span class="badge">Temps moyen: ${formatTime(avgTime)}</span>
+            <span class="badge">Sessions: ${n}</span>
+            <span class="badge">Meilleur: ${isFinite(best)?best:0}%</span>
+          </div>`;
+        dashGrid.appendChild(div);
+      }
+      if (!byCourse.size){ dashGrid.innerHTML = '<div class="card pad small">Aucune session encore. Lance un QCM puis enregistre la session.</div>'; }
+    }
+
+    // ----- Export de la session courante -----
+    function exportCurrentSessionCSV(){
+      if (!state.current) return alert('Pas de session en cours');
+      const { qcm, answers } = state.current;
+      const rows = [[ 'eleve','enseignant','cours','qcm_id','titre','question_index','question','choix','reponse_correcte','correct','horodatage' ]];
+      qcm.items.forEach((item, i)=>{
+        const a = answers[i];
+        const correct = Array.isArray(item.correct)? item.correct.join('|') : item.correct;
+        const given = a? (Array.isArray(a.given)? a.given.join('|') : a.given) : '';
+        const ok = a? (a.correct? '1':'0') : '';
+        rows.push([ state.eleve, qcm.teacher||'', qcm.course, qcm.id, qcm.title, i+1, item.text, given, correct, ok, a? a.time:'' ]);
+      });
+      exportCSV(rows, `session_${qcm.id}_${Date.now()}.csv`);
+    }
+
+    // ---------- Lisibilité & élève ----------
+    const prefs = loadPrefs();
+    const dysOn = prefs.dyslexiaOn !== false; document.body.classList.toggle('dyslexia-active', dysOn);
+    $('#btn-dys').setAttribute('aria-pressed', String(dysOn));
+    function setFont(delta){ const fs=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs')); const next=Math.min(22,Math.max(16,fs+delta)); document.documentElement.style.setProperty('--fs', next+'px'); prefs.fontPx=next; savePrefs(prefs); }
+    if (prefs.fontPx) document.documentElement.style.setProperty('--fs', prefs.fontPx+'px');
+
+    $('#btn-dys').addEventListener('click', ()=>{ const on = $('#btn-dys').getAttribute('aria-pressed')!=='true'; $('#btn-dys').setAttribute('aria-pressed', String(on)); document.body.classList.toggle('dyslexia-active', on); prefs.dyslexiaOn=on; savePrefs(prefs); });
+    $('#btn-a-plus').addEventListener('click', ()=> setFont(+1));
+    $('#btn-a-moins').addEventListener('click', ()=> setFont(-1));
+
+    function setEleve(name){ state.eleve = (name||'anonyme').trim()||'anonyme'; $('#eleve-badge').textContent = 'Élève: '+state.eleve; $('#eleve-input').value = state.eleve; localStorage.setItem('qcmhub_eleve', state.eleve); $('#dash-eleve').textContent = state.eleve==='anonyme'? 'tous élèves' : state.eleve; }
+    const q = parseQuery(); const savedEleve = localStorage.getItem('qcmhub_eleve'); setEleve(q.eleve || savedEleve || 'anonyme');
+    $('#btn-eleve').addEventListener('click', ()=> setEleve($('#eleve-input').value));
+
+    // ---------- Navigation ----------
+    $('#btn-home').addEventListener('click', ()=>{
+      if (views.quiz.classList.contains('active') && state.current){
+        if (!confirm('Quitter ce QCM ? Les réponses non enregistrées seront perdues.')) return;
+        endSession(false);
+        return;
+      }
+      renderHome();
+    });
+    $('#btn-dashboard').addEventListener('click', renderDashboard);
+    $('#btn-export-global').addEventListener('click', exportGlobal);
+    // Brancher Import CSV
+    const importBtn = document.getElementById('btn-import-csv');
+    const importInput = document.getElementById('file-csv');
+    if (importBtn && importInput){
+      importBtn.addEventListener('click', ()=> importInput.click());
+      importInput.addEventListener('change', (e)=>{ const f=e.target.files && e.target.files[0]; if (f) handleCSVFile(f); e.target.value=''; });
+    }
+
+    // Sortie douce du QCM si rechargement
+    window.addEventListener('beforeunload', (e)=>{
+      if (state.current){ e.preventDefault(); e.returnValue=''; }
+    });
+
+    // -------- Initial Render --------
+    function showDiag(msg, ok=false){ const box=document.getElementById('diag'); if(!box) return; box.style.display='block'; box.style.borderColor = ok? '#16A34A':'#DC2626'; box.style.background = ok? '#ECFDF5':'#FEF2F2'; box.textContent = msg; }
+    function init(){ try{ renderCoursesSidebar(); renderHome(); selfTests(); showDiag('✅ JavaScript opérationnel', true); } catch(e){ console.error(e); showDiag('❌ Erreur à l\'initialisation: '+ e.message); } }
+    init();
+
+    // Report uncaught errors to the page (helps when deployed)
+    window.addEventListener('error', (ev)=>{ showDiag('❌ JS error: '+ (ev.error? ev.error.message: ev.message)); });
+
+    // Expose une fin de session manuelle (pour intégrer à un bouton si besoin)
+    window.QCMHub = { endSession };
+
+    // ====== Auto-tests (ne modifient pas l'UI) ======
+    function selfTests(){
+      try {
+        // Test scoreQuestion (single)
+        console.assert(scoreQuestion({correct:2},2)===1,'single correct should be 1');
+        console.assert(scoreQuestion({correct:2},1)===0,'single wrong should be 0');
+        // Test scoreQuestion (multi)
+        const multiItem = {correct:[0,2,3]};
+        console.assert(scoreQuestion(multiItem,[0,2,3])===1,'multi exact set should be 1');
+        console.assert(scoreQuestion(multiItem,[0,3])===0,'multi missing one should be 0');
+        console.assert(scoreQuestion(multiItem,[0,2,3,1])===0,'multi with extra should be 0');
+        // Test parseCSV minimal (LF)
+        (function(){
+          const csv = 'teacher,course,title,question,choices,correct,explanation\nT,Cours,Ti,Q1,"A|B|C",1,Exp\nT,Cours,Ti,Q2,"A|B",0|1,Exp2';
+          const rows = parseCSV(csv); const built = csvRowsToQCMs(rows);
+          console.assert(built.length===1 && built[0].items.length===2,'CSV import (LF) failed');
+        })();
+        // Test parseCSV CRLF
+        (function(){
+          const csv = 'teacher,course,title,question,choices,correct,explanation\r\nT,Cours,Ti,Q1,"A|B|C",1,Exp\r\nT,Cours,Ti,Q2,"A|B",0|1,Exp2';
+          const rows = parseCSV(csv); const built = csvRowsToQCMs(rows);
+          console.assert(built.length===1 && built[0].items.length===2,'CSV import (CRLF) failed');
+        })();
+        // Test exportCSV escaping
+        const rows = [["a, b","c\n d","e\"f"]];
+        const blobOk = typeof new Blob([rows.join(',')]).size === 'number';
+        console.assert(blobOk,'Blob supported');
+        console.log('%c[Tests] OK — parsing/lignes et import CSV validés','color:green');
+      } catch(e){ console.error('[Tests] Échec', e); }
+    }
+  </script>
+</body>
+</html>
